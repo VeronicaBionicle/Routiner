@@ -1,3 +1,6 @@
+# Passwords for DB
+db_passwords.txt
+
 # User-specific files
 *.suo
 *.user
