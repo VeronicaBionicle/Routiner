@@ -9,22 +9,25 @@ namespace TelegramBot
 {
     public class ChooseBankMenu
     {
-        private enum BankMenuState
+        public enum BankMenuState
         {
             Init,
             BankFind,
             BankFindByBic,
             BankFindByName,
             BankChoose,
+            BankFound,
             Error
         }
 
-        private BankMenuState lastAnswer;
-        private BankInfo bankRep;
-        private List<Bank> banks;
+        private BankMenuState _lastState;
+        private BankInfo _bankRepository;
+        private List<Bank> _banks;
         private TelegramBotClient _botClient;
         private readonly List<string> _searchVariants = new List<string> { "Поиск по БИК", "Поиск по названию" };
         private ReplyKeyboardMarkup _searchKeyboard;
+        private int _bankId;
+        public int bankId { get { return _bankId; } }
         private static KeyboardButton[] GetKeyboardButtons(List<string> list)
         {
             var res = new KeyboardButton[list.Count];
@@ -40,7 +43,7 @@ namespace TelegramBot
             await _botClient.SendMessage(chatId,
                                            "Варианты поиска банка:\n1. По БИК\n2. По названию",
                                            replyMarkup: _searchKeyboard);
-            lastAnswer = BankMenuState.BankFind;
+            _lastState = BankMenuState.BankFind;
         }
 
         private async Task PeekBankMenu(long chatId)
@@ -48,7 +51,7 @@ namespace TelegramBot
 
             ReplyKeyboardMarkup keyboard = new(
                         new[] {
-                            GetKeyboardButtons(banks.Select(bank => bank.ShortName).ToList())
+                            GetKeyboardButtons(_banks.Select(bank => bank.ShortName).ToList())
                         }
                         )
             { ResizeKeyboard = true };
@@ -56,91 +59,101 @@ namespace TelegramBot
             await _botClient.SendMessage(chatId,
                                            "Выберите банк",
                                            replyMarkup: keyboard);
-            lastAnswer = BankMenuState.BankChoose;
+            _lastState = BankMenuState.BankChoose;
         }
 
-        public async Task/*<int>*/ ProccessChooseBankMenu(Update update) 
+        public async Task<bool> ProccessChooseBankMenu(Update update) 
         {
             var chatId = update.Message.Chat.Id;
-                switch (update.Type)
-                {
-                    case UpdateType.Message:
-                        Console.WriteLine(update.Message.Chat.Username + ": " + update.Message!.Text);
 
-                        if (lastAnswer == BankMenuState.Init) 
+            switch (update.Type)
+            {
+                case UpdateType.Message:
+                    Console.WriteLine(update.Message.Chat.Username + ": " + update.Message!.Text);
+
+                    if (_lastState == BankMenuState.Init) 
+                    {
+                        await VariantsFindBankMenu(chatId);
+                    }
+                    else if (_lastState == BankMenuState.BankFind)
+                    {
+                        switch (update.Message!.Text)
                         {
-                            await VariantsFindBankMenu(chatId);
-                        }
-                        else if (lastAnswer == BankMenuState.BankFind)
-                        {
-                            switch (update.Message!.Text)
-                            {
-                                case "Поиск по БИК":
-                                    await _botClient.SendMessage(chatId, "Введите БИК частично или целиком", replyMarkup: new ReplyKeyboardRemove());
-                                    lastAnswer = BankMenuState.BankFindByBic;
-                                    break;
-                                case "Поиск по названию":
-                                    await _botClient.SendMessage(chatId, "Введите название банка частично или целиком", replyMarkup: new ReplyKeyboardRemove());
-                                    lastAnswer = BankMenuState.BankFindByName;
-                                    break;
-                                default:
-                                    await VariantsFindBankMenu(chatId);
-                                    break;
-                            }
-                        }
-                        else if (lastAnswer == BankMenuState.BankFindByName || lastAnswer == BankMenuState.BankFindByBic)
-                        {
-                            var byNameOrByBic = (lastAnswer == BankMenuState.BankFindByName ? 0 : 1);
-                            banks = bankRep.GetBanksBy(update.Message.Text, byNameOrByBic);
-                            string message = "";
-                            if (banks.Count == 0)
-                            {
-                                message = "Банков с таким " + ((byNameOrByBic) == 0 ? "наименованием" : "БИК") + " не нашлось";
-                                await _botClient.SendMessage(chatId, message);
+                            case "Поиск по БИК":
+                                await _botClient.SendMessage(chatId, "Введите БИК частично или целиком", replyMarkup: new ReplyKeyboardRemove());
+                                _lastState = BankMenuState.BankFindByBic;
+                                break;
+                            case "Поиск по названию":
+                                await _botClient.SendMessage(chatId, "Введите название банка частично или целиком", replyMarkup: new ReplyKeyboardRemove());
+                                _lastState = BankMenuState.BankFindByName;
+                                break;
+                            default:
                                 await VariantsFindBankMenu(chatId);
-                            }
-                            else
-                            {
-                                var strBuilder = new StringBuilder();
-                                for (int i = 0; i < banks.Count; ++i)
-                                {
-                                    strBuilder.Append($"{i + 1}.\t{banks[i].ShortName}\t{banks[i].RCBic}\n");
-                                }
-                                message = strBuilder.ToString();
-                                await _botClient.SendMessage(chatId, message);
-                                await PeekBankMenu(chatId);
-                            }
-
+                                break;
                         }
-                        else if (lastAnswer == BankMenuState.BankChoose)
+                    }
+                    else if (_lastState == BankMenuState.BankFindByName || _lastState == BankMenuState.BankFindByBic)
+                    {
+                        var byNameOrByBic = (_lastState == BankMenuState.BankFindByName ? 0 : 1);
+                        _banks = _bankRepository.GetBanksBy(update.Message.Text, byNameOrByBic);
+                        string bankData = "";
+                        if (_banks.Count == 0)
                         {
-                            var bankId = banks.Where(bank => bank.ShortName == update.Message!.Text).Select(bank => bank.Id).FirstOrDefault();
-                            //lastAnswer = BankMenuState.Init;
-                            //return bankId;
-                            await _botClient.SendMessage(chatId, "Выбрали банк с Id " + bankId);
-                           // Придумываем, как передать bankId...
+                            bankData = "Банков с таким " + ((byNameOrByBic) == 0 ? "наименованием" : "БИК") + " не нашлось";
+                            await _botClient.SendMessage(chatId, bankData);
                             await VariantsFindBankMenu(chatId);
                         }
                         else
                         {
-                            await _botClient.SendMessage(chatId, "Что-то: " + update.Message.Text);
-                            await VariantsFindBankMenu(chatId);
-                            //return -1;
+                            var strBuilder = new StringBuilder();
+                            for (int i = 0; i < _banks.Count; ++i)
+                            {
+                                strBuilder.Append($"{i + 1}.\t{_banks[i].ShortName}\t{_banks[i].RCBic}\n");
+                            }
+                            bankData = strBuilder.ToString();
+                            await _botClient.SendMessage(chatId, bankData);
+                            await PeekBankMenu(chatId);
                         }
-                        //return -1;
-                        break;
-                    default:
-                        //return -1;
-                        break;
-                }            
+
+                    }
+                    else if (_lastState == BankMenuState.BankChoose)
+                    {
+                        if (_banks.Exists(bank => bank.ShortName == update.Message!.Text))
+                        {
+                            _bankId = _banks.Where(bank => bank.ShortName == update.Message!.Text).Select(bank => bank.Id).FirstOrDefault();
+                            _lastState = BankMenuState.BankFound;
+                        }
+                        else 
+                        {
+                            await _botClient.SendMessage(chatId, "Выбирайте из списка!");
+                            await PeekBankMenu(chatId);
+                        }
+                    }
+                    else // BankFound или ... 
+                    {
+                        await _botClient.SendMessage(chatId, "Что-то: " + update.Message.Text);
+                        await VariantsFindBankMenu(chatId);
+                    }
+                    break;
+                default:
+                    break;
+            }
+            // Если банк нашелся, заканчиваем
+            if (_lastState == BankMenuState.BankFound) 
+            {
+                await _botClient.SendMessage(chatId, $"Выбран банк {update.Message!.Text}", replyMarkup: new ReplyKeyboardRemove());
+                _lastState = BankMenuState.Init;
+                return true;
+            }
+            return false;
         }
         public ChooseBankMenu(TelegramBotClient botClient, string dbConnectionString) 
         {
-            lastAnswer = BankMenuState.Init;
-            bankRep = new BankInfo(dbConnectionString);
-            banks = new List<Bank>();
+            _lastState = BankMenuState.Init;
+            _bankRepository = new BankInfo(dbConnectionString);
+            _banks = new List<Bank>();
             _botClient = botClient;
-
+            _bankId = -1;
             _searchKeyboard = new(
                         new[] { GetKeyboardButtons(_searchVariants) }
                         )

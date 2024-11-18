@@ -43,7 +43,8 @@ namespace BankInformation
             if (byNameOrBic == 0)
             {
                 return GetBanksByName(str, limit);
-            } else
+            } 
+            else
             {
                 return GetBanksByRCBic(str, limit);
             }

@@ -9,7 +9,8 @@ namespace TelegramBot
     internal class Program
     {
         public static ChooseBankMenu bankChooseMenu;
-
+        public static bool isFoundBank = false;
+        public static int bankId;
         public static Task ErrorHandlerAsync(ITelegramBotClient botClient, Exception ex, CancellationToken cancellationToken)
         {
             var errorMessage = ex.ToString();
@@ -21,8 +22,18 @@ namespace TelegramBot
         {
             try
             {
-                /*var bankId = */await bankChooseMenu.ProccessChooseBankMenu(update);
-                /*await botClient.SendMessage(update.Message.Chat.Id, "Выбрали банк с Id " + bankId);*/
+                if (!isFoundBank)
+                {
+                    isFoundBank = await bankChooseMenu.ProccessChooseBankMenu(update);
+                    if (isFoundBank)
+                    {
+                        bankId = bankChooseMenu.bankId;
+                        await botClient.SendMessage(update.Message.Chat.Id, "Выбрали банк с Id " + bankId);
+                    }
+                }
+                // Тут уже знаем Id
+
+
             }
             catch (Exception ex)
             {
