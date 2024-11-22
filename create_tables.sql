@@ -9,6 +9,7 @@ CREATE TABLE routiner.t_users
 	CONSTRAINT PK_users_user_id PRIMARY KEY(user_id)
 );
 ALTER TABLE IF EXISTS routiner.t_users OWNER to veronika_nenyuk;
+alter table routiner.t_users add column chat_id bigint not null;
 
 /* Группы пользователей */
 CREATE TABLE routiner.t_groups

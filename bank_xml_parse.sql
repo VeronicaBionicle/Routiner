@@ -26,9 +26,10 @@ with xmldata as (select
 	unnest(xpath('//acc/Accounts/@AccountStatus', acc))::text AccountStatus
 	from parsed
   )
-  select BIC, NameP, Address, Account, AccountCBRBIC, AccountDateIn
+  --insert into routiner.t_banks (short_name, full_name, rcbic, correspondent_account)
+  select regexp_replace(nameP, 'ПАО|АО|ООО|[()"]', '', 'g') short_name, NameP, BIC, Account --,PrntBIC,Address,AccountCBRBIC
   from allinfo
-  where regexp_like(namep, 'сбер|азиатск|альфа|втб|дальневосточный|почта|мтс', 'i')
+  where 1=1 --and regexp_like(namep, 'сбер|азиатск|альфа|втб|дальневосточный|почта|мтс', 'i')
 -- and prntbic is null -- главный филиал = null
  and RegulationAccountType='CRSA' -- корсчет
  and PtType in (20) -- Кредитная организация
@@ -37,6 +38,8 @@ with xmldata as (select
  --and bic='200000548'
 ;
 
+
+--
 /*
 case RegulationAccountType
 		when 'CBRA' then 'Счёт Банка России'
