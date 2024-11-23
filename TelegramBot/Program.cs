@@ -3,12 +3,20 @@ using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Settings;
 using System;
-using BankInformation;
 using Npgsql;
 using System.Data;
 using Dapper;
-using static TelegramBot.ChooseBankMenu;
+
+using BankInformation;
+using UserInformation;
+
 using Telegram.Bot.Types.ReplyMarkups;
+using BotUtilities;
+using System.Text;
+using Telegram.Bot.Types.Enums;
+using static Dapper.SqlMapper;
+using System.Xml.Linq;
+
 
 namespace TelegramBot
 {
@@ -16,18 +24,14 @@ namespace TelegramBot
     {
         public static ChooseBankMenu bankChooseMenu;
         public static bool isFoundBank = false;
+
+        public static MenuState currentState = MenuState.Init;
+        public static UserInformation.User currentUser;
+
         public static int bankId;
         public static string dbConnectionString;
-
-        private static KeyboardButton[] GetKeyboardButtons(List<string> list)
-        {
-            var res = new KeyboardButton[list.Count];
-            for (int i = 0; i < list.Count; ++i)
-            {
-                res[i] = new KeyboardButton(list[i]);
-            }
-            return res;
-        }
+        public static UserInfo userInfo;
+        
 
 
 
@@ -44,43 +48,79 @@ namespace TelegramBot
         {
             try
             {
-                var mes = $"{update.Message.Chat.Username} {update.Message.Chat.FirstName} {update.Message.Chat.Id}";
-                Console.WriteLine(mes);
-
-                /* Проверим юзера */
-                using (IDbConnection db = new NpgsqlConnection(dbConnectionString))
+                if (update.Type == UpdateType.Message) 
                 {
-                    var userStatus = await db.QuerySingleOrDefaultAsync<int>("select routiner.user_status(@ChatId, @Username)",
-                                        new { ChatId = update.Message.Chat.Id, Username = update.Message.Chat.Username });
-                    if (userStatus == 0) 
+                    // Начало работы с ботом
+                    if (update.Message.Text == "/start")
                     {
-                        await botClient.SendMessage(update.Message.Chat.Id, $"В первый раз тебя вижу, { update.Message.Chat.FirstName ?? update.Message.Chat.Username }");
-                        
-                        var v = new List<string> { "Да", "Нет" };
+                        // Сперва проверим юзера
+                        var mes = $"{update.Message.Chat.Username} {update.Message.Chat.FirstName} {update.Message.Chat.Id}";
+                        Console.WriteLine(mes);
 
-                        ReplyKeyboardMarkup keyboard = new(
-                        new[] {
-                            GetKeyboardButtons(v)
+                        currentUser = new UserInformation.User(update.Message.Chat.FirstName, update.Message.Chat.LastName, update.Message.Chat.Username, update.Message.Chat.Id);
+
+                        /* Проверим юзера в базе */
+                        var userStatus = await userInfo.CheckUserStatus(currentUser);
+                        if (userStatus == 0)
+                        {
+                            await botClient.SendMessage(update.Message.Chat.Id, $"В первый раз тебя вижу, {update.Message.Chat.FirstName ?? update.Message.Chat.Username}");
+
+                            var v = new List<string> { "Да", "Нет" };
+
+                            ReplyKeyboardMarkup keyboard = new(
+                            new[] {
+                            BotUtil.GetKeyboardButtons(v)
+                            }
+                            )
+                            { ResizeKeyboard = true };
+
+                            await botClient.SendMessage(update.Message.Chat.Id,
+                                   "Хотите зарегистрироваться в боте?",
+                                   replyMarkup: keyboard);
+
+                            currentState = MenuState.AskUserCreate;
                         }
-                        )
-                        { ResizeKeyboard = true };
-
-                        await botClient.SendMessage(update.Message.Chat.Id,
-                               "Хотите зарегистрироваться в боте?",
-                               replyMarkup: keyboard);
+                        else
+                        {
+                            await botClient.SendMessage(update.Message.Chat.Id, $"Дарова, {update.Message.Chat.FirstName ?? update.Message.Chat.Username}");
+                            currentState = MenuState.UserRegistered;
+                            // ShowMenu
+                        }
                     }
-                    else
+                    else if (currentState == MenuState.AskUserCreate)
                     {
-                        await botClient.SendMessage(update.Message.Chat.Id, $"Дарова, {update.Message.Chat.FirstName ?? update.Message.Chat.Username}");
-                    }
-                    //await botClient.SendMessage(update.Message.Chat.Id, userStatus.ToString());
-                }
+ 
+                                if (update.Message!.Text == "Да")
+                                {
+                                    Console.WriteLine("Создаем пользователя");
+                                    var insertStatus = await userInfo.CreateUser(currentUser);
+                                    Console.WriteLine($"{insertStatus} row(s) inserted.");
+                                    if (insertStatus > 0)
+                                    {
+                                        currentState = MenuState.UserRegistered;
+                                    }
+                                    else
+                                    {
+                                        currentState = MenuState.Init;
+                                    }
 
-                /*
+                                }
+                                else
+                                {
+                                    await botClient.SendMessage(update.Message.Chat.Id, "Без регистрации функции не доступны...", replyMarkup: new ReplyKeyboardRemove());
+                                    currentState = MenuState.Init;
+                                }
+                        }
+
+                    else if (currentState == MenuState.UserRegistered)
+                    {
+                        //await botClient.SendMessage(update.Message.Chat.Id, "Меню Вклады и Кешбеки");
+
+                        
                 // Выбор банка
                 if (!isFoundBank)
                 {
-                    isFoundBank = await bankChooseMenu.ProccessChooseBankMenu(update);
+                    isFoundBank = (await bankChooseMenu.ProccessChooseBankMenu(update) == MenuState.BankFound);
                     if (isFoundBank)
                     {
                         bankId = bankChooseMenu.bankId;
@@ -88,7 +128,12 @@ namespace TelegramBot
                     }
                 }
                 // Тут уже знаем Id
-                */
+                
+                    }
+                }
+                
+
+                
 
             }
             catch (Exception ex)
@@ -109,6 +154,7 @@ namespace TelegramBot
                 var botClient = new TelegramBotClient(token);
 
                 bankChooseMenu = new ChooseBankMenu(botClient, dbConnectionString);
+                userInfo = new UserInfo(dbConnectionString);
 
                 botClient.StartReceiving(HandleUpdateAsync, ErrorHandlerAsync);
                 Console.ReadLine();
