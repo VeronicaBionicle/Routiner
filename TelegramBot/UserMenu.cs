@@ -57,7 +57,8 @@ namespace UserInformation
             }
             return _currentState;
         }
-        /*public ChooseBankMenu(TelegramBotClient botClient, string dbConnectionString)
+
+       public UserMenu(TelegramBotClient botClient, string dbConnectionString)
         {
             _currentState = MenuState.InitBankFind;
             _bankRepository = new BankInfo(dbConnectionString);
@@ -68,6 +69,6 @@ namespace UserInformation
                         new[] { BotUtil.GetKeyboardButtons(_searchVariants) }
                         )
             { ResizeKeyboard = true };
-        }*/
+        }
     }
 }

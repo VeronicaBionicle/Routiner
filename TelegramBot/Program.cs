@@ -25,14 +25,13 @@ namespace TelegramBot
         public static ChooseBankMenu bankChooseMenu;
         public static bool isFoundBank = false;
 
-        public static MenuState currentState = MenuState.Init;
         public static UserInformation.User currentUser;
 
         public static int bankId;
         public static string dbConnectionString;
         public static UserInfo userInfo;
-        
 
+        public static readonly List<string> mainMenu = new List<string> { "Выбор банка" };
 
 
         public static Task ErrorHandlerAsync(ITelegramBotClient botClient, Exception ex, CancellationToken cancellationToken)
@@ -42,99 +41,100 @@ namespace TelegramBot
             return Task.CompletedTask;
         }
 
+        public static async Task MakeMainMenu(ITelegramBotClient botClient, Chat currentChat) 
+        {
+            var mainKeyboard = new ReplyKeyboardMarkup(
+            new[] { BotUtil.GetKeyboardButtons(mainMenu) }
+            )
+            { ResizeKeyboard = true };
 
+            await botClient.SendMessage(currentChat.Id,
+                   "Функции бота",
+                   replyMarkup: mainKeyboard);
+            currentUser.State = MenuState.MainMenu;
+            await userInfo.UpdateUserState(currentUser, currentUser.State);
+        }
 
         public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
             try
             {
-                if (update.Type == UpdateType.Message) 
+                if (update.Type == UpdateType.Message && update.Message is not null) 
                 {
-                    // Начало работы с ботом
-                    if (update.Message.Text == "/start")
+                    var currentChat = update.Message.Chat;
+                    // Сперва берем юзера
+                    var mes = $"{currentChat.Username} {currentChat.Id}:\n{update.Message.Text}";
+                    Console.WriteLine(mes);
+                    
+                    currentUser = new UserInformation.User(currentChat.FirstName, currentChat.LastName, currentChat.Username, currentChat.Id);
+
+                    // Существует ли данный пользователь / чат в БД?
+                    var userStatus = await userInfo.CheckUserStatus(currentUser);
+                    if (userStatus == 0)
                     {
-                        // Сперва проверим юзера
-                        var mes = $"{update.Message.Chat.Username} {update.Message.Chat.FirstName} {update.Message.Chat.Id}";
-                        Console.WriteLine(mes);
+                        await botClient.SendMessage(currentChat.Id, $"Регистрирую вас, {currentChat.FirstName ?? currentChat.Username}.");
 
-                        currentUser = new UserInformation.User(update.Message.Chat.FirstName, update.Message.Chat.LastName, update.Message.Chat.Username, update.Message.Chat.Id);
+                        Console.WriteLine("Создаем пользователя");
 
-                        /* Проверим юзера в базе */
-                        var userStatus = await userInfo.CheckUserStatus(currentUser);
-                        if (userStatus == 0)
+                        var insertStatus = await userInfo.CreateUser(currentUser);
+                        Console.WriteLine($"{insertStatus} row(s) inserted.");
+                        if (insertStatus > 0)
                         {
-                            await botClient.SendMessage(update.Message.Chat.Id, $"В первый раз тебя вижу, {update.Message.Chat.FirstName ?? update.Message.Chat.Username}");
-
-                            var v = new List<string> { "Да", "Нет" };
-
-                            ReplyKeyboardMarkup keyboard = new(
-                            new[] {
-                            BotUtil.GetKeyboardButtons(v)
-                            }
-                            )
-                            { ResizeKeyboard = true };
-
-                            await botClient.SendMessage(update.Message.Chat.Id,
-                                   "Хотите зарегистрироваться в боте?",
-                                   replyMarkup: keyboard);
-
-                            currentState = MenuState.AskUserCreate;
+                            currentUser.State = MenuState.UserRegistered;
+                            await userInfo.UpdateUserState(currentUser, currentUser.State);
+                            await MakeMainMenu(botClient, currentChat);
                         }
                         else
                         {
-                            await botClient.SendMessage(update.Message.Chat.Id, $"Дарова, {update.Message.Chat.FirstName ?? update.Message.Chat.Username}");
-                            currentState = MenuState.UserRegistered;
-                            // ShowMenu
+                            await botClient.SendMessage(currentChat.Id, "Не удалось зарегистрировать вас в базе, попробуйте позже еще раз, отправив любое сообщение.");
+                            currentUser.State = MenuState.NewUser;
+                            await userInfo.UpdateUserState(currentUser, currentUser.State);
                         }
                     }
-                    else if (currentState == MenuState.AskUserCreate)
+                    else
                     {
- 
-                                if (update.Message!.Text == "Да")
-                                {
-                                    Console.WriteLine("Создаем пользователя");
-                                    var insertStatus = await userInfo.CreateUser(currentUser);
-                                    Console.WriteLine($"{insertStatus} row(s) inserted.");
-                                    if (insertStatus > 0)
-                                    {
-                                        currentState = MenuState.UserRegistered;
-                                    }
-                                    else
-                                    {
-                                        currentState = MenuState.Init;
-                                    }
+                        currentUser.UserId = await userInfo.GetUserId(currentUser);
+                        currentUser.State = await userInfo.GetUserStateById(currentUser);
 
-                                }
-                                else
-                                {
-                                    await botClient.SendMessage(update.Message.Chat.Id, "Без регистрации функции не доступны...", replyMarkup: new ReplyKeyboardRemove());
-                                    currentState = MenuState.Init;
-                                }
+                        if (currentUser.State == MenuState.NewUser) 
+                        {
+                            currentUser.State = MenuState.UserRegistered;
+                            await userInfo.UpdateUserState(currentUser, currentUser.State);
                         }
 
-                    else if (currentState == MenuState.UserRegistered)
-                    {
-                        //await botClient.SendMessage(update.Message.Chat.Id, "Меню Вклады и Кешбеки");
 
-                        
-                // Выбор банка
-                if (!isFoundBank)
-                {
-                    isFoundBank = (await bankChooseMenu.ProccessChooseBankMenu(update) == MenuState.BankFound);
-                    if (isFoundBank)
-                    {
-                        bankId = bankChooseMenu.bankId;
-                        await botClient.SendMessage(update.Message.Chat.Id, "Выбрали банк с Id " + bankId);
+                        if (currentUser.State == MenuState.UserRegistered)
+                        {
+                            await MakeMainMenu(botClient, currentChat);
+                        }
+                        else if (currentUser.State == MenuState.MainMenu)
+                        {
+                            switch (update.Message.Text)
+                            {
+                                case "Выбор банка":
+                                    currentUser.State = MenuState.InitBankFind;
+                                    await userInfo.UpdateUserState(currentUser, currentUser.State);
+                                    await bankChooseMenu.ProccessChooseBankMenu(update, currentUser);
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                        else if (currentUser.State == MenuState.InitBankFind || currentUser.State == MenuState.InitBankFind ||
+                                 currentUser.State == MenuState.BankFind || currentUser.State == MenuState.BankFindByBic ||
+                                 currentUser.State == MenuState.BankFindByName || currentUser.State == MenuState.BankChoose )
+                        {
+                                await bankChooseMenu.ProccessChooseBankMenu(update, currentUser);
+                                if (currentUser.State == MenuState.BankFound)
+                                {
+                                    bankId = bankChooseMenu.bankId;
+                                    await botClient.SendMessage(currentChat.Id, "Выбрали банк с Id " + bankId);
+                                    // Возвращаемся в меню
+                                    await MakeMainMenu(botClient, currentChat);
+                                }
+                        }
                     }
                 }
-                // Тут уже знаем Id
-                
-                    }
-                }
-                
-
-                
-
             }
             catch (Exception ex)
             {
@@ -142,7 +142,7 @@ namespace TelegramBot
             } 
         }
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             var settings = new Settings.Settings("settings.json");
 
@@ -155,6 +155,12 @@ namespace TelegramBot
 
                 bankChooseMenu = new ChooseBankMenu(botClient, dbConnectionString);
                 userInfo = new UserInfo(dbConnectionString);
+
+                using (IDbConnection db = new NpgsqlConnection(dbConnectionString))
+                {
+                    await db.QuerySingleOrDefaultAsync<MenuState>("UPDATE routiner.t_users SET state = @State",
+                    new { State = MenuState.NewUser });
+                }
 
                 botClient.StartReceiving(HandleUpdateAsync, ErrorHandlerAsync);
                 Console.ReadLine();

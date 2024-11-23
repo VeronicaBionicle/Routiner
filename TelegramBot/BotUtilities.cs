@@ -17,11 +17,10 @@ namespace BotUtilities
 
     public enum MenuState
     {
-        Init,
+        NewUser,        // пользователь в первый раз пишет боту, требуется добавить в базу
 
-        AskUserCreate,
-        UserCreate,
         UserRegistered,
+        MainMenu,
 
         InitBankFind,
         BankFind,
