@@ -13,12 +13,9 @@ namespace UserInformation
 {
     public class UserInfo
     {
-        private const int _defaultLimit = 5;
-        private string _connectionString = null;
-        public UserInfo(string connection)
-        {
-            _connectionString = connection;
-        }
+        private readonly string ? _connectionString = null;
+
+        public UserInfo(string connection) => _connectionString = connection;
 
         public async Task<int> CreateUser(User user)
         {
@@ -26,10 +23,9 @@ namespace UserInformation
                       + "values (@Name, @Surname, @TelegramAccount, @IsActive, @ChatId)";
             using (IDbConnection db = new NpgsqlConnection(_connectionString))
             {
-                var rowsAffected = await db.ExecuteAsync(query, new { Name = user.Name, Surname = user.Surname, TelegramAccount = user.TelegramAccount, IsActive = user.IsActive, ChatId = user.ChatId });
+                var rowsAffected = await db.ExecuteAsync(query, new { user.Name, user.Surname, user.TelegramAccount, user.IsActive, user.ChatId });
                 return rowsAffected;
             }
-            return -1;
         }
 
         public async Task<int> CheckUserStatus(User user)
@@ -38,7 +34,7 @@ namespace UserInformation
             using (IDbConnection db = new NpgsqlConnection(_connectionString))
             {
                 userStatus = await db.QuerySingleOrDefaultAsync<int>("select routiner.user_status(@ChatId, @Username)",
-                new { ChatId = user.ChatId, Username = user.TelegramAccount });
+                new { user.ChatId, Username = user.TelegramAccount });
             }
             return userStatus;
         }
@@ -56,7 +52,7 @@ namespace UserInformation
                 using (IDbConnection db = new NpgsqlConnection(_connectionString))
                 {
                     userId = await db.QuerySingleOrDefaultAsync<long>("SELECT user_id FROM routiner.t_users WHERE chat_id = @ChatId AND is_active ORDER BY 1 desc LIMIT 1",
-                    new { ChatId = user.ChatId });
+                    new { user.ChatId });
                 }
             }
             else if (status == 2)
@@ -77,17 +73,18 @@ namespace UserInformation
             using (IDbConnection db = new NpgsqlConnection(_connectionString))
             {
                 state = await db.QuerySingleOrDefaultAsync<MenuState>("SELECT state FROM routiner.t_users WHERE user_id = @UserId LIMIT 1",
-                new { UserId = user.UserId });
+                new { user.UserId });
             }
             return state;
         }
 
         public async Task UpdateUserState(User user, MenuState state)
         {
+            user.State = state;
             using (IDbConnection db = new NpgsqlConnection(_connectionString))
             {
                 await db.QuerySingleOrDefaultAsync<MenuState>("UPDATE routiner.t_users SET state = @State WHERE user_id = @UserId",
-                new { State = state, UserId = user.UserId });
+                new { State = state, user.UserId });
             }
         }
 

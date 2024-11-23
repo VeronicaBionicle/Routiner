@@ -10,8 +10,6 @@ namespace BankInformation
 {
     public class ChooseBankMenu
     {
-        //private MenuState user.State;
-
         private BankInfo _bankRepository;
         private List<Bank> _banks;
         private TelegramBotClient _botClient;
@@ -34,13 +32,7 @@ namespace BankInformation
         private async Task PeekBankMenu(long chatId, UserInformation.User user)
         {
 
-            ReplyKeyboardMarkup keyboard = new(
-                        new[] {
-                            BotUtil.GetKeyboardButtons(_banks.Select(bank => bank.ShortName).ToList())
-                        }
-                        )
-            { ResizeKeyboard = true };
-
+            ReplyKeyboardMarkup keyboard = BotUtil.GetKeyboardMarkup(_banks.Select(bank => bank.ShortName).ToList());
             await _botClient.SendMessage(chatId,
                                            "Выберите банк",
                                            replyMarkup: keyboard);
@@ -122,24 +114,18 @@ namespace BankInformation
             if (user.State == MenuState.BankFound)
             {
                 await _botClient.SendMessage(chatId, $"Выбран банк {update.Message!.Text}", replyMarkup: new ReplyKeyboardRemove());
-                /*user.State = MenuState.InitBankFind;
-                await userInfo.UpdateUserState(user, user.State);*/
                 return MenuState.BankFound;
             }
             return user.State;
         }
         public ChooseBankMenu(TelegramBotClient botClient, string dbConnectionString)
         {
-            //user.State = MenuState.InitBankFind;
             userInfo = new UserInfo(dbConnectionString);
             _bankRepository = new BankInfo(dbConnectionString);
             _banks = new List<Bank>();
             _botClient = botClient;
             _bankId = -1;
-            _searchKeyboard = new(
-                        new[] { BotUtil.GetKeyboardButtons(_searchVariants) }
-                        )
-            { ResizeKeyboard = true };
+            _searchKeyboard = BotUtil.GetKeyboardMarkup(_searchVariants);
         }
     }
 }

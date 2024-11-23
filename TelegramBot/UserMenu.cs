@@ -22,13 +22,7 @@ namespace UserInformation
         private async Task PeekBankMenu(long chatId)
         {
 
-            ReplyKeyboardMarkup keyboard = new(
-                        new[] {
-                            BotUtil.GetKeyboardButtons(_banks.Select(bank => bank.ShortName).ToList())
-                        }
-                        )
-            { ResizeKeyboard = true };
-
+            ReplyKeyboardMarkup keyboard = BotUtil.GetKeyboardMarkup(_banks.Select(bank => bank.ShortName).ToList());
             await _botClient.SendMessage(chatId,
                                            "Выберите банк",
                                            replyMarkup: keyboard);
@@ -65,10 +59,7 @@ namespace UserInformation
             _banks = new List<Bank>();
             _botClient = botClient;
             _bankId = -1;
-            _searchKeyboard = new(
-                        new[] { BotUtil.GetKeyboardButtons(_searchVariants) }
-                        )
-            { ResizeKeyboard = true };
+            _searchKeyboard = BotUtil.GetKeyboardMarkup(_searchVariants);
         }
     }
 }

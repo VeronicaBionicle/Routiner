@@ -4,7 +4,7 @@ namespace BotUtilities
 {
     public static class BotUtil
     {
-        public static KeyboardButton[] GetKeyboardButtons(List<string> list)
+        private static KeyboardButton[] GetKeyboardButtons(List<string> list)
         {
             var res = new KeyboardButton[list.Count];
             for (int i = 0; i < list.Count; ++i)
@@ -12,6 +12,11 @@ namespace BotUtilities
                 res[i] = new KeyboardButton(list[i]);
             }
             return res;
+        }
+
+        public static ReplyKeyboardMarkup GetKeyboardMarkup(List<string> list) 
+        {
+            return new ReplyKeyboardMarkup(new[] { GetKeyboardButtons(list) }) { ResizeKeyboard = true };
         }
     }
 
