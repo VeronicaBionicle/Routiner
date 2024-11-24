@@ -13,7 +13,7 @@ namespace UserInformation
         public string ? TelegramAccount { get { return _telegramAccount; } }
         public long ChatId { get { return _chatId; } }
         public bool IsActive { get { return _isActive; } }
-        public long UserId { get; set; }
+        public int UserId { get; set; }
 
         public User(string ? name, string ? surname, string ? telegramAccount, long chatId) 
         {

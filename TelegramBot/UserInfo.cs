@@ -39,9 +39,9 @@ namespace UserInformation
             return userStatus;
         }
 
-        public async Task<long> GetUserId(User user) 
+        public async Task<int> GetUserId(User user) 
         {
-            long userId = -1;
+            int userId = -1;
             var status = await CheckUserStatus(user);
             if (status == 0)
             {
@@ -51,7 +51,7 @@ namespace UserInformation
             {
                 using (IDbConnection db = new NpgsqlConnection(_connectionString))
                 {
-                    userId = await db.QuerySingleOrDefaultAsync<long>("SELECT user_id FROM routiner.t_users WHERE chat_id = @ChatId AND is_active ORDER BY 1 desc LIMIT 1",
+                    userId = await db.QuerySingleOrDefaultAsync<int>("SELECT user_id FROM routiner.t_users WHERE chat_id = @ChatId AND is_active ORDER BY 1 desc LIMIT 1",
                     new { user.ChatId });
                 }
             }
@@ -59,7 +59,7 @@ namespace UserInformation
             {
                 using (IDbConnection db = new NpgsqlConnection(_connectionString))
                 {
-                    userId = await db.QuerySingleOrDefaultAsync<long>("SELECT user_id FROM routiner.t_users WHERE telegram_account ilike @Username AND is_active ORDER BY 1 desc LIMIT 1",
+                    userId = await db.QuerySingleOrDefaultAsync<int>("SELECT user_id FROM routiner.t_users WHERE telegram_account ilike @Username AND is_active ORDER BY 1 desc LIMIT 1",
                     new { Username = user.TelegramAccount });
                 }
             }
@@ -80,11 +80,28 @@ namespace UserInformation
 
         public async Task UpdateUserState(User user, MenuState state)
         {
-            user.State = state;
             using (IDbConnection db = new NpgsqlConnection(_connectionString))
             {
                 await db.QuerySingleOrDefaultAsync<MenuState>("UPDATE routiner.t_users SET state = @State WHERE user_id = @UserId",
                 new { State = state, user.UserId });
+            }
+        }
+
+        public async Task UpdateUserBankId(User user, int bankId) 
+        {
+            using (IDbConnection db = new NpgsqlConnection(_connectionString))
+            {
+                await db.QuerySingleOrDefaultAsync<MenuState>("call routiner.save_user_bank_id(@UserId, @BankId)",
+                new {user.UserId, BankId = bankId });
+            }
+        }
+
+        public async Task<int> GetUserBankId(User user)
+        {
+            using (IDbConnection db = new NpgsqlConnection(_connectionString))
+            {
+                return await db.QuerySingleOrDefaultAsync<int>("select bank_id BankId from routiner.t_user_bank_choose where user_id = @UserId",
+                new { user.UserId });
             }
         }
 

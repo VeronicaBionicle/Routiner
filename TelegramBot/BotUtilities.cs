@@ -27,12 +27,13 @@ namespace BotUtilities
         UserRegistered,
         MainMenu,
 
-        InitBankFind,
         BankFind,
         BankFindByBic,
         BankFindByName,
         BankChoose,
-        BankFound,
+
+        AddCashbackCategory,
+        AskAddCashback,
 
         Error
     }

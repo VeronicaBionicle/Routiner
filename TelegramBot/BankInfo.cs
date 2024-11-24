@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using System.Data;
 using Npgsql;
+using BotUtilities;
 
 namespace BankInformation
 {
@@ -26,7 +27,7 @@ namespace BankInformation
                     new { Name = $"%{name}%", Limit = limit }).ToList();
             }
         }
-        public List<Bank> GetBanksByRCBic(string ? RCBic, int limit = _defaultLimit)
+        private List<Bank> GetBanksByRCBic(string ? RCBic, int limit = _defaultLimit)
         {
             using (IDbConnection db = new NpgsqlConnection(_connectionString))
             {
@@ -44,6 +45,15 @@ namespace BankInformation
             else
             {
                 return GetBanksByRCBic(str, limit);
+            }
+        }
+
+        public async Task<string ?> GetBankName(int bankId)
+        {
+            using (IDbConnection db = new NpgsqlConnection(_connectionString))
+            {
+                return await db.QuerySingleOrDefaultAsync<string>("SELECT short_name FROM routiner.t_banks WHERE bank_id = @BankId",
+                new { BankId = bankId });
             }
         }
     }
