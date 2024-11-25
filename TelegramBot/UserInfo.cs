@@ -19,12 +19,20 @@ namespace UserInformation
 
         public async Task<int> CreateUser(User user)
         {
-            var query = "insert into routiner.t_users (name, surname, telegram_account, is_active, chat_id)"
-                      + "values (@Name, @Surname, @TelegramAccount, @IsActive, @ChatId)";
-            using (IDbConnection db = new NpgsqlConnection(_connectionString))
+            var query = "insert into routiner.t_users (name, surname, telegram_account, is_active, chat_id, state)"
+                      + "values (@Name, @Surname, @TelegramAccount, @IsActive, @ChatId, @State)"
+                      + "returning user_id";
+            try
             {
-                var rowsAffected = await db.ExecuteAsync(query, new { user.Name, user.Surname, user.TelegramAccount, user.IsActive, user.ChatId });
-                return rowsAffected;
+                using (IDbConnection db = new NpgsqlConnection(_connectionString))
+                {
+                    var newId = await db.ExecuteScalarAsync<int>(query, new { user.Name, user.Surname, user.TelegramAccount, user.IsActive, user.ChatId, State = MenuState.UserRegistered });
+                    return newId;
+                }
+            }
+            catch 
+            {
+                return -1; // не удалось вставить
             }
         }
 
@@ -80,6 +88,7 @@ namespace UserInformation
 
         public async Task UpdateUserState(User user, MenuState state)
         {
+            user.State = state;
             using (IDbConnection db = new NpgsqlConnection(_connectionString))
             {
                 await db.QuerySingleOrDefaultAsync<MenuState>("UPDATE routiner.t_users SET state = @State WHERE user_id = @UserId",

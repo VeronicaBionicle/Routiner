@@ -10,6 +10,7 @@ CREATE TABLE routiner.t_users
 );
 ALTER TABLE IF EXISTS routiner.t_users OWNER to veronika_nenyuk;
 alter table routiner.t_users add column chat_id bigint not null;
+alter table routiner.t_users add constraint chat_id_unique unique (chat_id);
 
 /* Группы пользователей */
 CREATE TABLE routiner.t_groups
