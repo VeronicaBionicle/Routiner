@@ -45,7 +45,7 @@ namespace TelegramBot
         private readonly ReplyKeyboardMarkup _askKeyboard;
 
         private readonly List<string> _searchVariants = ["Поиск по БИК", "Поиск по названию", "Отмена"];
-        private readonly List<string> _mainMenuVariants = ["Просмотр кешбека", "Добавление кешбека"];
+        private readonly List<string> _mainMenuVariants = ["Мои кешбеки", "Кешбеки группы",  "Добавление кешбека"];
         private readonly List<string> _askVariants = ["Да", "Нет"];
 
         public Task ErrorHandlerAsync(ITelegramBotClient botClient, Exception ex, CancellationToken cancellationToken)
@@ -87,8 +87,12 @@ namespace TelegramBot
                             case MenuState.MainMenu:
                                 switch (update.Message.Text)
                                 {
-                                    case "Просмотр кешбека":
+                                    case "Мои кешбеки":
                                         await WatchCashbacks();
+                                        await SendMessageAndChangeState(_mainMenuKeyboard, MenuState.MainMenu); // Возврат в меню
+                                        break;
+                                    case "Кешбеки группы":
+                                        await WatchGroupCashbacks();
                                         await SendMessageAndChangeState(_mainMenuKeyboard, MenuState.MainMenu); // Возврат в меню
                                         break;
                                     case "Добавление кешбека":

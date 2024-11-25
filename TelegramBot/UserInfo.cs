@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using Telegram.Bot.Types;
 using System.Collections;
 using BotUtilities;
+using BankInformation;
 
 
 namespace UserInformation
@@ -111,6 +112,17 @@ namespace UserInformation
             {
                 return await db.QuerySingleOrDefaultAsync<int>("select bank_id BankId from routiner.t_user_bank_choose where user_id = @UserId",
                 new { user.UserId });
+            }
+        }
+
+        public List<(int, string)> GetUsersInYourGroup(User user)
+        {
+            using (IDbConnection db = new NpgsqlConnection(_connectionString))
+            {
+                return db.Query<(int, string)>("select distinct gr.user_id, coalesce(u.name, u.telegram_account) name from routiner.t_user_group gr"
+                                   + " join routiner.t_users u on u.user_id = gr.user_id"
+                                   + " where exists (select 1 from routiner.t_user_group g where g.user_id = @UserId)",
+                    new { user.UserId }).ToList();
             }
         }
 

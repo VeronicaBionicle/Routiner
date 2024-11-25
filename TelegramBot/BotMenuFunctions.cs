@@ -67,6 +67,41 @@ namespace TelegramBot
                 }
             }
         }
+        private async Task WatchGroupCashbacks()
+        {
+            var usersInGroup = _userInfo.GetUsersInYourGroup(_user); // получаем список групп
+            if (usersInGroup.Count == 0) 
+            {
+                await _botClient.SendMessage(_user.ChatId, "Вы не состоите ни в каких группах");
+            }
+            else 
+            {
+                foreach (var user in usersInGroup)
+                {
+                    var cashbacks = _cashbackInfo.GetUserCashebacks(user.Item1, DateTime.Now);
+                    if (cashbacks.Count > 0)
+                    {
+                        var groupedCashbacks = from cashback in cashbacks
+                                               group cashback by cashback.BankName;
+
+                        var strBuilder = new StringBuilder($"*{user.Item2}*: кешбеки на {CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(DateTime.Now.Month)}\n");
+                        await _botClient.SendMessage(_user.ChatId, strBuilder.ToString(), parseMode: ParseMode.Markdown);
+
+                        foreach (var bank in groupedCashbacks)
+                        {
+                            strBuilder = new StringBuilder($"*{bank.Key}*\n");
+
+                            foreach (var casheback in bank)
+                            {
+                                strBuilder.AppendLine($"_{casheback.Category}_:\t{Math.Round(casheback.Rate * 100, 2)}%");
+                            }
+                            await _botClient.SendMessage(_user.ChatId, strBuilder.ToString(), parseMode: ParseMode.Markdown);
+                        }
+                    }
+                }
+            }
+        }
+        
 
         private async Task ProcessCashback(string input)
         {
