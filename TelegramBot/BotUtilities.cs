@@ -17,6 +17,7 @@ namespace BotUtilities
         BankChoose,
         AddCashbackCategory,
         AskAddCashback,
+        DeleteCashback,
         Error
     }
     public static class BotUtil
@@ -33,6 +34,7 @@ namespace BotUtilities
             { MenuState.BankChoose, "Выберите банк"},
             { MenuState.AddCashbackCategory, "Введите название категории кешбека и процент в формате:\n\"Категория кешбека\" процент.\nЕсли передумали вводить, введите /cancel" },
             { MenuState.AskAddCashback, "Хотите добавить еще категорию?" },
+            { MenuState.DeleteCashback, "Выберите кешбек для удаления" },
             { MenuState.Error, "Произошла ошибка"}
         };
 

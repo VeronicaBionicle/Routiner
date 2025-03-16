@@ -102,7 +102,6 @@ namespace TelegramBot
             }
         }
         
-
         private async Task ProcessCashback(string input)
         {
             // Обрабатываем ввод

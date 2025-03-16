@@ -16,7 +16,7 @@ namespace CashbackInformation
             var findDate = date ?? DateTime.Now;
             using (IDbConnection db = new NpgsqlConnection(_connectionString))
             {
-                return db.Query<Casheback>("select b.short_name BankName, c.bank_id BankId, c.category Category, c.rate Rate, c.user_id UserId"
+                return db.Query<Casheback>("select c.cashback_id CashebackId, b.short_name BankName, c.bank_id BankId, c.category Category, c.rate Rate, c.user_id UserId"
                                           + " from routiner.t_cashbacks c"
                                           + " join routiner.t_banks b on b.bank_id = c.bank_id"
                                           + " where c.user_id = @UserId and date_trunc('month', @Date) between c.date_begin and c.date_end"
@@ -34,6 +34,15 @@ namespace CashbackInformation
                 await db.QuerySingleOrDefaultAsync<MenuState>("insert into routiner.t_cashbacks (category, rate, date_begin, date_end, user_id, bank_id)" 
                                                             + "values (@Category, @Rate, @DateBegin, @DateEnd, @UserId, @BankId)",
                 new { cashback.Category, cashback.Rate, DateBegin = dateBegin, DateEnd = dateEnd, cashback.UserId, cashback.BankId });
+            }
+        }
+
+        public async Task DeleteCashback(Casheback cashback)
+        {
+            using (IDbConnection db = new NpgsqlConnection(_connectionString))
+            {
+                await db.QuerySingleOrDefaultAsync<MenuState>("delete from routiner.t_cashbacks where cashback_id=@CashebackId",
+                new { cashback.CashebackId });
             }
         }
     }

@@ -4,6 +4,7 @@ namespace CashbackInformation
 {
     public class Casheback 
     {
+        public int CashebackId;
         public string ? BankName;
         public int BankId;
         public string Category;

@@ -45,7 +45,7 @@ namespace TelegramBot
         private readonly ReplyKeyboardMarkup _askKeyboard;
 
         private readonly List<string> _searchVariants = ["Поиск по БИК", "Поиск по названию", "Отмена"];
-        private readonly List<string> _mainMenuVariants = ["Мои кешбеки", "Кешбеки группы",  "Добавление кешбека"];
+        private readonly List<string> _mainMenuVariants = ["Мои кешбеки", "Кешбеки группы",  "Добавление кешбека", "Удаление кешбека"];
         private readonly List<string> _askVariants = ["Да", "Нет"];
 
         public Task ErrorHandlerAsync(ITelegramBotClient botClient, Exception ex, CancellationToken cancellationToken)
@@ -98,6 +98,20 @@ namespace TelegramBot
                                     case "Добавление кешбека":
                                         await botClient.SendMessage(chat.Id, "Выберите банк, по карте которого действует кешбек", cancellationToken: cancellationToken);
                                         await SendMessageAndChangeState(_bankSearchKeyboard, MenuState.BankFind);
+                                        break;
+                                    case "Удаление кешбека":
+                                        var cashbackList = _cashbackInfo.GetUserCashebacks(_user.UserId, DateTime.Now);
+                                        if (cashbackList.Count > 0)
+                                        {
+                                            var cashbacks = cashbackList.Select(cashback => $"{cashback.BankName}: {cashback.Category} {Math.Round(cashback.Rate * 100, 2)}%").ToList();
+                                            var cashbackKeyboard = BotUtil.GetKeyboardMarkup(cashbacks);
+                                            await SendMessageAndChangeState(cashbackKeyboard, MenuState.DeleteCashback);
+                                        }
+                                        else 
+                                        {
+                                            await _botClient.SendMessage(_user.ChatId, "Не найдены кешбеки для текущего месяца.");
+                                            await SendMessageAndChangeState(_mainMenuKeyboard, MenuState.MainMenu); // возврат в меню
+                                        }
                                         break;
                                     default:
                                         await SendMessageAndChangeState(_mainMenuKeyboard, MenuState.MainMenu); // Возврат в меню
@@ -165,6 +179,12 @@ namespace TelegramBot
                                         await SendMessageAndChangeState(new ReplyKeyboardRemove(), MenuState.AddCashbackCategory);
                                         break;
                                 }
+                                break;
+                            case MenuState.DeleteCashback:
+                                var cashbackListToDelete = _cashbackInfo.GetUserCashebacks(_user.UserId, DateTime.Now);
+                                var cashbackToDelete = cashbackListToDelete.FirstOrDefault(c => $"{c.BankName}: {c.Category} {Math.Round(c.Rate * 100, 2)}%" == update.Message.Text);
+                                await _cashbackInfo.DeleteCashback(cashbackToDelete);
+                                await SendMessageAndChangeState(_mainMenuKeyboard, MenuState.MainMenu); // возврат в меню
                                 break;
                             default:
                                 await _botClient.SendMessage(chat.Id, "Что-то не так с сообщением: " + update.Message.Text);
