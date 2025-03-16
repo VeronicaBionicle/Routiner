@@ -181,9 +181,13 @@ namespace TelegramBot
                                 }
                                 break;
                             case MenuState.DeleteCashback:
-                                var cashbackListToDelete = _cashbackInfo.GetUserCashebacks(_user.UserId, DateTime.Now);
-                                var cashbackToDelete = cashbackListToDelete.FirstOrDefault(c => $"{c.BankName}: {c.Category} {Math.Round(c.Rate * 100, 2)}%" == update.Message.Text);
-                                await _cashbackInfo.DeleteCashback(cashbackToDelete);
+                                if (update.Message.Text != "Отмена" && update.Message.Text != "/cancel")
+                                {
+                                    var cashbackListToDelete = _cashbackInfo.GetUserCashebacks(_user.UserId, DateTime.Now);
+                                    var cashbackToDelete = cashbackListToDelete.FirstOrDefault(c => $"{c.BankName}: {c.Category} {Math.Round(c.Rate * 100, 2)}%" == update.Message.Text);
+                                    if (cashbackToDelete is not null)
+                                        await _cashbackInfo.DeleteCashback(cashbackToDelete);
+                                }
                                 await SendMessageAndChangeState(_mainMenuKeyboard, MenuState.MainMenu); // возврат в меню
                                 break;
                             default:
