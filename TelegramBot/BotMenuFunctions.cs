@@ -108,12 +108,29 @@ namespace TelegramBot
             // Обрабатываем ввод
             try
             {
-                var category = Regex.Matches(input, @""".+""")[0].Value.Replace("\"", string.Empty);
-                var rateStr = Regex.Matches(input, @"[0-9|.|,]+$")[0].Value.Replace(".", ",");
-                double rate = double.Parse(rateStr);
+                var category = Regex.Matches(input, @""".+""")[0].Value.Replace("\"", string.Empty); // категория кешбека
+                
+                var rateStr = Regex.Matches(input, @"[0-9|.|,]+")[0].Value.Replace(".", ","); // процент кешбека
+                var rate = double.Parse(rateStr);
+
+                // Если ничего не вводили по месяцу, то будет автоматом выбран текущий
+                var dateStart = DateTime.Now;
+                var monthMatch = Regex.Matches(input, @"\([А-Яа-я]+\)");
+
+                if (monthMatch.Count > 0)
+                {
+                    var monthStr = monthMatch[0].Value[1..^1]; // убрать скобки
+                    var month = BotUtil.MonthNumberByName(monthStr);
+
+                    if (month > 0) // если номер месяца корректный, пишем
+                    {
+                        dateStart = new DateTime(dateStart.Year, month, 1);
+                    }
+                }
+
                 var choosenBankId = await _userInfo.GetUserBankId(_user);
                 var cashback = new Casheback(choosenBankId, category, rate / 100.0, _user.UserId);
-                await _cashbackInfo.AddCashback(cashback, DateTime.Now);
+                await _cashbackInfo.AddCashback(cashback, dateStart);
 
                 await SendMessageAndChangeState(_askKeyboard, MenuState.AskAddCashback);
             }

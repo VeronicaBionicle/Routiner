@@ -1,4 +1,7 @@
-﻿using Telegram.Bot.Types.ReplyMarkups;
+﻿using Npgsql;
+using System.Data;
+using System.Globalization;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BotUtilities
 {    
@@ -48,6 +51,42 @@ namespace BotUtilities
         internal static ReplyKeyboardMarkup GetKeyboardMarkup(List<string> list) 
         {
             return new ReplyKeyboardMarkup(new[] { GetKeyboardButtons(list) }) { ResizeKeyboard = true };
+        }
+
+        // Функция получения номера месяца из названия
+        internal static int MonthNumberByName(string monthName)
+        {
+            var cultureInfo = new CultureInfo("ru-RU");
+            var abbreviatedMonthGenitiveNames = cultureInfo.DateTimeFormat.AbbreviatedMonthGenitiveNames;
+
+            for (int i = 0; i < abbreviatedMonthGenitiveNames.Length - 1; ++i)
+            {
+                var name = abbreviatedMonthGenitiveNames[i][..^1]; // без точки в конце
+                if (monthName.StartsWith(name, true, cultureInfo))
+                {
+                    return i + 1;
+                }
+            }
+            return 0;
+        }
+
+        // Функция проверки подключения к БД
+        internal static bool CheckConnection(string dbConnectionString) 
+        {
+            var result = false;
+            try
+            {
+                var testConnection = new NpgsqlConnection(dbConnectionString);
+                testConnection.Open();
+                if (testConnection.State == ConnectionState.Open)
+                    result = true;
+                testConnection.Close();
+            }
+            catch 
+            {
+                result = false; // ошибка - что-то не так с подключением
+            }
+            return result;
         }
     }
 }

@@ -19,41 +19,72 @@ namespace TelegramBot
     {
         static async Task Main()
         {
-            var settings = new Settings.Settings("settings.json");
-
-            if (settings.SettingsLoaded == SettingsStatus.Ok)
+            try
             {
-                var dbConnectionString = settings.CreateDatabaseConnectionString();
-                var token = settings.GetBotToken();
-                var botClient = new TelegramBotClient(token);
+                var settings = new Settings.Settings("settings.json");
 
-                var bot = new Bot(botClient, dbConnectionString);
-
-                // Чтобы при перезапуске бота не зависало состояние у пользователей и выбранных ими банков
-                using (IDbConnection db = new NpgsqlConnection(dbConnectionString))
+                if (settings.SettingsLoaded == SettingsStatus.Ok)
                 {
-                    await db.QuerySingleOrDefaultAsync<MenuState>("UPDATE routiner.t_users SET state = @State",
-                    new { State = MenuState.UserRegistered });
+                    var dbConnectionString = settings.CreateDatabaseConnectionString();
+                    var connectionOk = BotUtil.CheckConnection(dbConnectionString);
 
-                    await db.QuerySingleOrDefaultAsync<MenuState>("truncate routiner.t_user_bank_choose",
-                    new { State = MenuState.UserRegistered });
+                    if (connectionOk)
+                    {
+                        var token = settings.GetBotToken();
+                        var botClient = new TelegramBotClient(token);
+
+                        var botOk = botClient.TestApi().Result;
+
+                        if (botOk)
+                        {
+                            var bot = new Bot(botClient, dbConnectionString);
+
+                            // Чтобы при перезапуске бота не зависало состояние у пользователей и выбранных ими банков
+                            using (IDbConnection db = new NpgsqlConnection(dbConnectionString))
+                            {
+                                await db.QuerySingleOrDefaultAsync<MenuState>("UPDATE routiner.t_users SET state = @State",
+                                new { State = MenuState.UserRegistered });
+
+                                await db.QuerySingleOrDefaultAsync<MenuState>("truncate routiner.t_user_bank_choose",
+                                new { State = MenuState.UserRegistered });
+                            }
+
+                            botClient.StartReceiving(bot.HandleUpdateAsync, bot.ErrorHandlerAsync);
+
+                            Console.WriteLine("Бот стартанул.");
+                        }
+                        else 
+                        {
+                            Console.WriteLine($"Ошибка при подключении к боту BotId={botClient.BotId}.");
+                        }
+
+                    }
+                    else
+                    {
+                        Console.WriteLine("Ошибка подключения к БД, параметры подключения:");
+                        Console.WriteLine(String.Join("\n", dbConnectionString.Split("; ")));
+                    }
+
                 }
-
-                botClient.StartReceiving(bot.HandleUpdateAsync, bot.ErrorHandlerAsync);
-                Console.ReadLine();
+                else
+                {
+                    if (settings.SettingsLoaded == SettingsStatus.FileNotFound)
+                    {
+                        Console.WriteLine("Ошибка загрузки конфигурации: файл не найден");
+                    }
+                    else if (settings.SettingsLoaded == SettingsStatus.JsonNotParsed)
+                    {
+                        Console.WriteLine("Ошибка загрузки конфигурации: файл неправильного формата");
+                    }
+                }
             }
-            else
+            catch (Exception ex)
             {
-                if (settings.SettingsLoaded == SettingsStatus.FileNotFound)
-                {
-                    Console.WriteLine("Ошибка загрузки конфигурации: файл не найден");
-                }
-                else if (settings.SettingsLoaded == SettingsStatus.JsonNotParsed)
-                {
-                    Console.WriteLine("Ошибка загрузки конфигурации: файл неправильного формата");
-                }
-                return;
+                Console.WriteLine(ex.Message);
             }
+
+            // Чтобы не схлопывалось окно
+            Console.ReadLine();
         }
     }
 }
