@@ -40,19 +40,19 @@ namespace TelegramBot
             }
         }
 
-        private async Task WatchCashbacks()
+        private async Task WatchCashbacks(DateTime date)
         {
-            var cashbacks = _cashbackInfo.GetUserCashebacks(_user.UserId, DateTime.Now);
+            var cashbacks = _cashbackInfo.GetUserCashebacks(_user.UserId, date);
             if (cashbacks.Count == 0)
             {
-                await _botClient.SendMessage(_user.ChatId, "Не найдены кешбеки для текущего месяца.");
+                await _botClient.SendMessage(_user.ChatId, $"Не найдены кешбеки на {CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(date.Month)}.");
             }
             else
             {
                 var groupedCashbacks = from cashback in cashbacks
                                        group cashback by cashback.BankName;
 
-                var strBuilder = new StringBuilder($"Ваши кешбеки на {CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(DateTime.Now.Month)}\n");
+                var strBuilder = new StringBuilder($"Ваши кешбеки на {CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(date.Month)}\n");
                 await _botClient.SendMessage(_user.ChatId, strBuilder.ToString(), parseMode: ParseMode.Markdown);
 
                 foreach (var bank in groupedCashbacks)
@@ -67,7 +67,7 @@ namespace TelegramBot
                 }
             }
         }
-        private async Task WatchGroupCashbacks()
+        private async Task WatchGroupCashbacks(DateTime date)
         {
             var usersInGroup = _userInfo.GetUsersInYourGroup(_user); // получаем список групп
             if (usersInGroup.Count == 0) 
@@ -78,13 +78,13 @@ namespace TelegramBot
             {
                 foreach (var user in usersInGroup)
                 {
-                    var cashbacks = _cashbackInfo.GetUserCashebacks(user.Item1, DateTime.Now);
+                    var cashbacks = _cashbackInfo.GetUserCashebacks(user.Item1, date);
                     if (cashbacks.Count > 0)
                     {
                         var groupedCashbacks = from cashback in cashbacks
                                                group cashback by cashback.BankName;
 
-                        var strBuilder = new StringBuilder($"*{user.Item2}*: кешбеки на {CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(DateTime.Now.Month)}\n");
+                        var strBuilder = new StringBuilder($"*{user.Item2}*: кешбеки на {CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(date.Month)}\n");
                         await _botClient.SendMessage(_user.ChatId, strBuilder.ToString(), parseMode: ParseMode.Markdown);
 
                         foreach (var bank in groupedCashbacks)

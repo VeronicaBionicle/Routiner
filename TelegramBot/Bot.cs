@@ -88,11 +88,21 @@ namespace TelegramBot
                                 switch (update.Message.Text)
                                 {
                                     case "Мои кешбеки":
-                                        await WatchCashbacks();
+                                        await WatchCashbacks(DateTime.Now);
+
+                                        /* Под конец месяца показываем еще и кэшбеки на будущий */
+                                        if (DateTime.Now.Day > 23)
+                                            await WatchCashbacks(DateTime.Now.AddMonths(1));
+
                                         await SendMessageAndChangeState(_mainMenuKeyboard, MenuState.MainMenu); // Возврат в меню
                                         break;
                                     case "Кешбеки группы":
-                                        await WatchGroupCashbacks();
+                                        await WatchGroupCashbacks(DateTime.Now);
+
+                                        /* Под конец месяца показываем еще и кэшбеки на будущий */
+                                        if (DateTime.Now.Day > 23)
+                                            await WatchGroupCashbacks(DateTime.Now.AddMonths(1));
+
                                         await SendMessageAndChangeState(_mainMenuKeyboard, MenuState.MainMenu); // Возврат в меню
                                         break;
                                     case "Добавление кешбека":

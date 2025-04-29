@@ -1,0 +1,65 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" version="24.9.0">
+  <diagram name="Страница — 1" id="LwhTRPLFU-koKBySx5H-">
+    <mxGraphModel dx="1221" dy="626" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="_6z7jXPJySypyI8SfN00-7" value="Консольная программа на C#&lt;div&gt;&lt;br&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="180" y="150" width="260" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="_6z7jXPJySypyI8SfN00-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" edge="1" parent="1" source="_6z7jXPJySypyI8SfN00-1" target="_6z7jXPJySypyI8SfN00-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="_6z7jXPJySypyI8SfN00-21" value="Запросы с данными о пользователях, банках, кешбеках" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="_6z7jXPJySypyI8SfN00-8">
+          <mxGeometry x="-0.2778" y="-2" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="_6z7jXPJySypyI8SfN00-1" value="&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;БД&lt;/div&gt;Postgres" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.database;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="260" y="30" width="90" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="_6z7jXPJySypyI8SfN00-5" value="XML с данными&lt;div&gt;о банках на сайте Центробанка&amp;nbsp;&lt;/div&gt;&lt;div&gt;России&lt;/div&gt;" style="shape=parallelogram;html=1;strokeWidth=2;perimeter=parallelogramPerimeter;whiteSpace=wrap;rounded=1;arcSize=12;size=0.23;" vertex="1" parent="1">
+          <mxGeometry x="30" y="35" width="170" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="_6z7jXPJySypyI8SfN00-6" value="Dapper +&amp;nbsp;&lt;span style=&quot;color: rgb(51, 51, 51); font-family: -apple-system, BlinkMacSystemFont, Arial, Helvetica, sans-serif; font-size: 13px; text-align: start; background-color: rgb(255, 255, 255);&quot;&gt;Npgsql&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="255" y="170" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="_6z7jXPJySypyI8SfN00-10" value="" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="275" y="390" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="_6z7jXPJySypyI8SfN00-11" value="" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="265" y="380" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="_6z7jXPJySypyI8SfN00-12" value="Пользователи" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="255" y="370" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="_6z7jXPJySypyI8SfN00-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" edge="1" parent="1" source="_6z7jXPJySypyI8SfN00-13" target="_6z7jXPJySypyI8SfN00-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="_6z7jXPJySypyI8SfN00-15" value="Сообщения в Телеграм-боте" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="_6z7jXPJySypyI8SfN00-14">
+          <mxGeometry x="0.3917" y="3" relative="1" as="geometry">
+            <mxPoint x="2" y="-5" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="_6z7jXPJySypyI8SfN00-19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" edge="1" parent="1" source="_6z7jXPJySypyI8SfN00-13" target="_6z7jXPJySypyI8SfN00-16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="_6z7jXPJySypyI8SfN00-13" value="Telegram API" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="255" y="280" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="_6z7jXPJySypyI8SfN00-16" value="Telegram.Bot" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="255" y="230" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="_6z7jXPJySypyI8SfN00-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="_6z7jXPJySypyI8SfN00-5" target="_6z7jXPJySypyI8SfN00-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="_6z7jXPJySypyI8SfN00-23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="_6z7jXPJySypyI8SfN00-22" target="_6z7jXPJySypyI8SfN00-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="_6z7jXPJySypyI8SfN00-22" value="JSON-файл&amp;nbsp;&lt;div&gt;с настройками&lt;div&gt;&lt;div&gt;для бота и БД&amp;nbsp;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;" style="shape=parallelogram;html=1;strokeWidth=2;perimeter=parallelogramPerimeter;whiteSpace=wrap;rounded=1;arcSize=12;size=0.23;" vertex="1" parent="1">
+          <mxGeometry x="480" y="40" width="140" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

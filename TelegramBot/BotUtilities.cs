@@ -32,7 +32,7 @@ namespace BotUtilities
             { MenuState.BankFindByBic, "Введите БИК частично или целиком.\nЕсли передумали искать по БИК, введите /cancel"},
             { MenuState.BankFindByName, "Введите название банка частично или целиком.\nЕсли передумали искать по названию, введите /cancel"},
             { MenuState.BankChoose, "Выберите банк"},
-            { MenuState.AddCashbackCategory, "Введите название категории кешбека и процент в формате:\n\"Категория кешбека\" процент.\nЕсли передумали вводить, введите /cancel" },
+            { MenuState.AddCashbackCategory, "Введите название категории кешбека и процент в формате:\n\"Категория кешбека\" процент (месяц).\nЕсли передумали вводить, введите /cancel" },
             { MenuState.AskAddCashback, "Хотите добавить еще категорию?" },
             { MenuState.DeleteCashback, "Выберите кешбек для удаления" },
             { MenuState.Error, "Произошла ошибка"}
