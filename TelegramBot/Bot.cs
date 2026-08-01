@@ -79,7 +79,7 @@ namespace TelegramBot
                         _user.State = await _userInfo.GetUserStateById(_user);
 
                         // Обработка состояний
-                        switch (_user.State) 
+                        switch (_user.State)
                         {
                             case MenuState.UserRegistered:
                                 await SendMessageAndChangeState(_mainMenuKeyboard, MenuState.MainMenu);
@@ -107,7 +107,9 @@ namespace TelegramBot
                                         break;
                                     case "Добавление кешбека":
                                         await botClient.SendMessage(chat.Id, "Выберите банк, по карте которого действует кешбек", cancellationToken: cancellationToken);
-                                        await SendMessageAndChangeState(_bankSearchKeyboard, MenuState.BankFind);
+                                        //await SendMessageAndChangeState(_bankSearchKeyboard, MenuState.BankFind);
+                                        await SendMessageAndChangeState(new ReplyKeyboardRemove(), MenuState.BankFindByName);
+
                                         break;
                                     case "Удаление кешбека":
                                         var cashbackList = _cashbackInfo.GetUserCashebacks(_user.UserId, DateTime.Now);
@@ -117,7 +119,7 @@ namespace TelegramBot
                                             var cashbackKeyboard = BotUtil.GetKeyboardMarkup(cashbacks);
                                             await SendMessageAndChangeState(cashbackKeyboard, MenuState.DeleteCashback);
                                         }
-                                        else 
+                                        else
                                         {
                                             await _botClient.SendMessage(_user.ChatId, "Не найдены кешбеки для текущего месяца.");
                                             await SendMessageAndChangeState(_mainMenuKeyboard, MenuState.MainMenu); // возврат в меню
@@ -157,7 +159,7 @@ namespace TelegramBot
                                 }
                                 break;
                             case MenuState.BankChoose:
-                                if (update.Message.Text == "Отмена" || update.Message.Text == "/cancel") 
+                                if (update.Message.Text == "Отмена" || update.Message.Text == "/cancel")
                                 {
                                     await SendMessageAndChangeState(_bankSearchKeyboard, MenuState.BankFind);
                                 }
@@ -179,10 +181,10 @@ namespace TelegramBot
                             case MenuState.AskAddCashback:
                                 switch (update.Message.Text)
                                 {
-                                    case "Да":
+                                    case "Да" or "да" or "д":
                                         await SendMessageAndChangeState(new ReplyKeyboardRemove(), MenuState.AddCashbackCategory);
                                         break;
-                                    case "Нет":
+                                    case "Нет" or "нет" or "н":
                                         await SendMessageAndChangeState(_mainMenuKeyboard, MenuState.MainMenu);
                                         break;
                                     default:

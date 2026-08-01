@@ -107,30 +107,46 @@ namespace TelegramBot
             // Обрабатываем ввод
             try
             {
-                var category = Regex.Matches(input, @""".+""")[0].Value.Replace("\"", string.Empty); // категория кешбека
-                
-                var rateStr = Regex.Matches(input, @"[0-9|.|,]+")[0].Value.Replace(".", ","); // процент кешбека
-                var rate = double.Parse(rateStr);
+                var cashbackList = input.Split('\n');
 
-                // Если ничего не вводили по месяцу, то будет автоматом выбран текущий
-                var dateStart = DateTime.Now;
-                var monthMatch = Regex.Matches(input, @"\([А-Яа-я]+\)");
-
-                if (monthMatch.Count > 0)
+                foreach (var line in cashbackList)
                 {
-                    var monthStr = monthMatch[0].Value[1..^1]; // убрать скобки
-                    var month = BotUtil.MonthNumberByName(monthStr);
+                    var regexCategory = Regex.Matches(line, @""".+""")[0];
+                    var category = regexCategory.Value.Replace("\"", string.Empty); // категория кешбека
 
-                    if (month > 0) // если номер месяца корректный, пишем
+                    var rateStr = line.Substring(regexCategory.Index + regexCategory.Length + 1);
+
+                    var regexRate = Regex.Matches(rateStr, @"[0-9|.|,]+")[0];
+
+                    rateStr = regexRate.Value.Replace(".", ","); // процент кешбека
+                    var rate = double.Parse(rateStr);
+
+                    // Если ничего не вводили по месяцу, то будет автоматом выбран текущий
+                    var dateStart = DateTime.Now;
+
+                    if (regexCategory.Index + regexCategory.Length + 1 + regexRate.Index + regexRate.Length + 1 < line.Length)
                     {
-                        dateStart = new DateTime(dateStart.Year, month, 1);
+                        var monthStr = line.Substring(regexCategory.Index + regexCategory.Length + 1 + regexRate.Index + regexRate.Length + 1);
+
+                        var monthMatch = Regex.Matches(monthStr, @"\([А-Яа-я]+\)");
+
+                        if (monthMatch.Count > 0)
+                        {
+                            var monthName = monthMatch[0].Value[1..^1]; // убрать скобки
+                            var month = BotUtil.MonthNumberByName(monthName);
+
+                            if (month > 0) // если номер месяца корректный, пишем
+                            {
+                                dateStart = new DateTime(dateStart.Year, month, 1);
+                            }
+                        }
                     }
+
+                    var choosenBankId = await _userInfo.GetUserBankId(_user);
+                    var cashback = new Casheback(choosenBankId, category, rate / 100.0, _user.UserId);
+
+                    await _cashbackInfo.AddCashback(cashback, dateStart);
                 }
-
-                var choosenBankId = await _userInfo.GetUserBankId(_user);
-                var cashback = new Casheback(choosenBankId, category, rate / 100.0, _user.UserId);
-                await _cashbackInfo.AddCashback(cashback, dateStart);
-
                 await SendMessageAndChangeState(_askKeyboard, MenuState.AskAddCashback);
             }
             catch
@@ -156,7 +172,8 @@ namespace TelegramBot
                 var strBuilder = new StringBuilder();
                 for (int i = 0; i < banks.Count; ++i)
                 {
-                    strBuilder.Append($"{i + 1}.\t{banks[i].ShortName}\t{banks[i].RCBic}\n");
+                    //strBuilder.Append($"{i + 1}.\t{banks[i].ShortName}\t{banks[i].RCBic}\n");
+                    strBuilder.Append($"{i + 1}.\t{banks[i].ShortName}\n");
                 }
                 bankData = strBuilder.ToString();
                 await _botClient.SendMessage(_user.ChatId, bankData);
